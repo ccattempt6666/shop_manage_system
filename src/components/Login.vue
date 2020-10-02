@@ -53,7 +53,10 @@ export default {
             message: meta.msg,
             duration: 1000
           })
+          // 保存token
           localStorage.setItem('token', data.token)
+          // 跳转到首页
+          this.$router.push('index')
         } else {
           this.$message.error(meta.msg)
         }
