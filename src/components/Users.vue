@@ -44,7 +44,7 @@
       <template v-slot:default="{ row }">
         <el-button @click="showEditDialog(row)" size="small" plain type="primary" icon="el-icon-edit"></el-button>
         <el-button @click="delRole(row.id)" size="small" plain type="danger" icon="el-icon-delete"></el-button>
-        <el-button size="small" plain type="success" icon="el-icon-check">分配角色</el-button>
+        <el-button @click="showAssignDialog(row)" size="small" plain type="success" icon="el-icon-check">分配角色</el-button>
       </template>
     </el-table-column>
   </el-table>
@@ -108,17 +108,38 @@
       <el-button type="primary" @click="editRole">确 定</el-button>
     </span>
   </el-dialog>
+  <!-- 分配角色 -->
+  <el-dialog
+  title="分配角色"
+  :visible.sync="assignVisible"
+  width="40%"
+  >
+  <el-form :model="assignForm" label-width="80px">
+    <el-form-item label="用户名">
+      <el-tag type="info">{{ assignForm.username }}</el-tag>
+    </el-form-item>
+    <el-form-item label="角色列表">
+      <el-select v-model="value" placeholder="请选择">
+        <el-option
+          v-for="item in options"
+          :key="item.id"
+          :label="item.roleName"
+          :value="item.id">
+        </el-option>
+      </el-select>
+    </el-form-item>
+  </el-form>
+  <span slot="footer" class="dialog-footer">
+    <el-button @click="assignVisible = false">取 消</el-button>
+    <el-button @click="assignRole" type="primary">分 配</el-button>
+  </span>
+  </el-dialog>
 </div>
 </template>
 
 <script>
 export default {
   data () {
-    // var checkMobile = (rule, value, callback) => {
-    //   const rep = /^1[1-9]\d{9}$/
-    //   if (!rep.test(value)) return callback(new Error('请输入正确的手机号码'))
-    //   callback()
-    // }
     return {
       query: '',
       pagenum: 1,
@@ -126,23 +147,14 @@ export default {
       total: 0,
       addVisible: false,
       editVisible: false,
-      userList: [{
-        date: '2016-05-02',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1518 弄'
-      }, {
-        date: '2016-05-04',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1517 弄'
-      }, {
-        date: '2016-05-01',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1519 弄'
-      }, {
-        date: '2016-05-03',
-        name: '王小虎',
-        address: '上海市普陀区金沙江路 1516 弄'
-      }],
+      assignVisible: false,
+      assignForm: {
+        username: '',
+        id: ''
+      },
+      options: [],
+      value: '',
+      userList: [],
       newRoleData: {
         username: '',
         password: '',
@@ -271,6 +283,7 @@ export default {
         const { meta } = await this.$axios.delete(`users/${id}`)
         if (meta.status === 200) {
           this.$message.success(meta.msg)
+          this.pagenum = 1
           this.getUserList()
         } else {
           this.$message.error(meta.msg)
@@ -294,6 +307,43 @@ export default {
       } catch (e) {
         console.log(e)
       }
+    },
+    // 分配角色
+    async showAssignDialog (row) {
+      // 弹出分配角色对话框
+      this.assignVisible = true
+      this.assignForm.username = row.username
+      this.assignForm.id = row.id
+      try {
+        // 获取所有角色
+        const { meta, data } = await this.$axios.get('roles')
+        // 获取用户信息
+        const res = await this.$axios.get(`users/${row.id}`)
+        let rid = res.data.rid
+        rid = rid === -1 ? '' : rid
+        if (meta.status === 200) {
+          this.options = data
+          this.value = rid
+        } else {
+          this.$message.error(meta.msg)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+    },
+    async assignRole () {
+      try {
+        const { meta } = await this.$axios.put(`users/${this.assignForm.id}/role`, { rid: this.value })
+        if (meta.status === 200) {
+          this.$message.success(meta.msg)
+          this.getUserList()
+        } else {
+          this.$message.error(meta.msg)
+        }
+      } catch (e) {
+        console.log(e)
+      }
+      this.assignVisible = false
     }
   }
 }
