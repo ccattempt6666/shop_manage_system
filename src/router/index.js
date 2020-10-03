@@ -4,7 +4,9 @@ import Login from '../components/Login.vue'
 import Index from '../components/Index.vue'
 import Users from '../components/Users.vue'
 import Roles from '../components/Roles.vue'
-import Rights from '../components/Rights.vue'
+// import Rights from '../components/Rights.vue'
+// 路由懒加载
+const Rights = () => import('../components/Rights.vue')
 Vue.use(VueRouter)
 
 const routes = [
